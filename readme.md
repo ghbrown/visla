@@ -17,6 +17,7 @@ $ visla M10PI_n.mtx
 ```
 
 For now it takes [SuiteSparse](https://sparse.tamu.edu/)/[MatrixMarket](https://math.nist.gov/MatrixMarket/) standard `.mtx` files as input.
+You can try it out on the small matrices in `mtx/`.
 
 If you want more fine grained control, use the `visla.VGraph` class (documentation below) in a Python program.
 
@@ -63,4 +64,8 @@ The pipeline to create these visualization was informed by the following:
 - Right now, the command line program `visla` only accepts `.mtx` files as input.
   This would be a nice thing to expand (a trivial first start would be to use the capability `pygraphviz.AGraph(<DOT file>)` to allow `visla` to read and render DOT files).
   Meanwhile, the class `VGraph` can visualize anything you can feed to `PyGraphviz`.
+- Performance needs to be investigated: graphs of about 10,000 nodes and 50,000 nodes can be visualized within a minute, but many of the larger visualizations reported in the linked galleries seems to be out of reach for one reason or another.
+  Although the `sfdp` implementation is out of our hands, one can at least compare to the times reported in Yifan Hu's gallery and ensure parity.
+  Render performance is certainly bad (see `todo.md`).
+
 
