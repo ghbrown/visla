@@ -1,0 +1,52 @@
+#!/usr/bin/env/python3
+import argparse
+from pathlib import Path
+from visla import VGraph
+import matplotlib.pyplot as plt
+
+
+# set up command line argument parser
+parser = argparse.ArgumentParser()
+parser.add_argument('file',
+                    metavar='file',
+                    help='file in Matrix Market (.mtx) format'
+                    )
+parser.add_argument('--bipartite',
+                    action='store_true',
+                    default=False,
+                    help='visualize bipartite version of graph (possibly useful for graphs corresponding to non-square matrices)'
+                    )
+parser.add_argument('--algorithm',
+                    choices=['neato','fdp','sfdp'],
+                    action='store',
+                    help='algorithm used to lay out graph in 2D'
+                    )
+parser.add_argument('--save',
+                    metavar='file',
+                    action='store',
+                    help='also save visualization to file (determined from extension)'
+                    )
+parser.add_argument('--linewidth',
+                    action='store',
+                    metavar='width',
+                    help='linewidth in render, float'
+                    )
+args = parser.parse_args()
+path = Path(args.file)          # example: /mtx/will57.mtx
+name = path.name                # example: will57.mtx
+bipartite = args.bipartite
+linewidth = args.linewidth
+save = args.save
+
+B = VGraph()  # object to hold graph
+B.from_mtx(path,bipartite=bipartite)
+B.layout(prog='sfdp')  # lay out graph nodes in 2D using sdfp algorithm
+
+if (save is not None): # set up out own fig/ax to show and save figure
+    fig, ax = plt.subplots(nrows=1,ncols=1)  # we own figure to control/save plot
+    fig, ax = B.mm_vis(fig,ax,linewidth=linewidth)  # visualize graph
+    plt.show()
+    fig.savefig(save,transparent=True)
+else:
+    B.mm_vis(linewidth=linewidth)
+

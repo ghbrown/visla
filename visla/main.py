@@ -1,18 +1,17 @@
-from icecream import ic
 from pygraphviz import AGraph
 from numpy import array
 from numpy.linalg import norm
 import matplotlib.pyplot as plt
 import cmasher as cmr
 
-class VisGraph(AGraph):
+class VGraph(AGraph):
     def __init__(self):
         AGraph.__init__(self,strict=True,directed=False)
         self.__layout_lines = []  # output of layout() as lines of file
         self.__nodes = {}
         self.__edges = []
         self.bg_color = 'black'
-        self.cm       = cmr.get_sub_cmap(cmr.chroma,0.5,0.8)
+        self.cm       = cmr.get_sub_cmap(cmr.tropical,0.0,1.0)
 
     def layout(self,prog='sfdp',args=''):
         """
@@ -22,12 +21,12 @@ class VisGraph(AGraph):
         AGraph.layout(self,prog=prog,args=args)
         self.__layout_lines = self.__multiline_to_lines(self.string())
 
-    def from_mtx(self,file_name):
+    def from_mtx(self,file_name,bipartite=False):
         """
         set up a GraphViz graph from a .mtx file
         """
         # set up reasonable defaults
-        self.node_attr["label"] = 'ugh'  # PGV broken relative to GV
+        # self.node_attr["label"] = ""  # PyGraphviz doesn't like this
         self.node_attr["shape"] = "none"
         self.node_attr["width"] = 0
         self.node_attr["height"] = 0
@@ -40,20 +39,14 @@ class VisGraph(AGraph):
             if ('%---' in line):
                 i_last = i_l
         i_dim = i_last + 1 # contains dimensions
+        m, n = lines[i_dim].strip().split()[0:2]  # row and column dimensions
         i_0 = i_dim + 2    # first line containing data
         for line in lines[i_0:]:
             i, j = line.strip().split()[0:2]  # ingore nonzero (if present)
-            self.add_edge(i,j)
-
-    def from_gv(self,file_name):
-        """
-        set up for visualization using .gv file with layout information (nodal
-        positions
-        note: does not construct a GraphViz graph
-        """
-        with open(file_name) as f:
-            lines = f.readlines()
-        self.__layout_lines = [line.strip() for line in lines if line.strip()]
+            if ((m != n) or bipartite):  # set up corresponding bipartite graph
+                self.add_edge(i,str(int(m)+int(j)))
+            else:                        # graph corresponding to A + A^T
+                self.add_edge(i,j)
 
     def __multiline_to_lines(self,ml):
         # https://stackoverflow.com/questions/7630273/convert-multiline-into-list
