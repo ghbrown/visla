@@ -192,7 +192,7 @@ class VGraph(AGraph):
                 self.__nodes[label] = x
             i += len(token)   # token may be multiple lines
         
-    def mm_vis(self,fig=None,ax=None,*args,**kwargs):
+    def visualize(self,fig=None,ax=None,*args,**kwargs):
         """
         visualizes the graph in the style of:
           - Yifan Hu's gallery of large graphs

@@ -39,7 +39,7 @@ Specifically, the following methods and fields have been added:
   - `csv`: comma separated values (first line dimensions, rest of lines `i, j, A_ij`)
   - `npz`: npz files saved by [`scipy.sparse.save_npz`](https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.save_npz.html)
   - `gv/dot`: Graphviz [dot language](https://graphviz.org/docs/outputs/canon/) files 
-- `mm_vis()`: visualize a laid out graph; creates, shows, and destroys its own figure by default, but may be called as `mm_vis(fig,ax)` if you want control of the figure (for example to use `savefig()`)
+- `visualize()`: visualize a laid out graph; creates, shows, and destroys its own figure by default, but may be called as `mm_vis(fig,ax)` if you want control of the figure (for example to use `savefig()`)
 - `bg_color`: color of background
 - `cm`: color map taking `edge length -> edge color`
 - `bipartite`: visualize the bipartite graph corresponding to the sparse matrix (useful for non-square matrices)
