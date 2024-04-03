@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 parser = argparse.ArgumentParser()
 parser.add_argument('file',
                     metavar='file',
-                    help='file in Matrix Market (.mtx) format'
+                    help='file containing matrix/graph, format guessed from the extension unless --filetype is used'
                     )
 parser.add_argument('--filetype',
                     choices=VGraph()._VGraph__impl_files,
@@ -27,15 +27,15 @@ parser.add_argument('--algorithm',
                     action='store',
                     help='algorithm used to lay out graph in 2D'
                     )
-parser.add_argument('--save',
-                    metavar='file',
-                    action='store',
-                    help='also save visualization to file (determined from extension)'
-                    )
 parser.add_argument('--linewidth',
                     action='store',
                     metavar='width',
                     help='linewidth in render, float'
+                    )
+parser.add_argument('--save',
+                    metavar='file',
+                    action='store',
+                    help='also save visualization to file (determined from extension)'
                     )
 args = parser.parse_args()
 path = Path(args.file)
@@ -46,15 +46,15 @@ linewidth = args.linewidth
 save = args.save
 
 B = VGraph()  # object to hold graph
-B.bipartite = bipartite
-B.from_file(path,file_type=file_type)
+B.bipartite = bipartite  # set bipartite-ness (should be set before read)
+B.from_file(path,file_type=file_type)  # read in graph
 B.layout(prog=algorithm)  # lay out graph nodes in 2D using sdfp algorithm
 
-if (save is not None): # set up out own fig/ax to show and save figure
+if (save is not None): # set up our own fig/ax to show and save figure
     fig, ax = plt.subplots(nrows=1,ncols=1)  # we own figure to control/save plot
     fig, ax = B.mm_vis(fig,ax,linewidth=linewidth)  # visualize graph
     plt.show()
     fig.savefig(save,transparent=True)
-else:
+else:  # let VGraph create and destroy its own figure internally
     B.mm_vis(linewidth=linewidth)
 
