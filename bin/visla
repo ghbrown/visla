@@ -29,6 +29,7 @@ parser.add_argument('--algorithm',
                     )
 parser.add_argument('--linewidth',
                     action='store',
+                    type=float,
                     metavar='width',
                     help='linewidth in render, float'
                     )
@@ -55,9 +56,9 @@ B.layout(prog=algorithm)  # lay out graph nodes in 2D using sdfp algorithm
 
 if (save is not None): # set up our own fig/ax to show and save figure
     fig, ax = plt.subplots(nrows=1,ncols=1)  # we own figure to control/save plot
-    fig, ax = B.visualize(fig,ax,linewidth=linewidth)  # visualize graph
+    fig, ax = B.visualize(fig,ax,linewidths=linewidth)  # visualize graph
     plt.show()
     fig.savefig(save,transparent=True)
 else:  # let VGraph create and destroy its own figure internally
-    B.visualize(linewidth=linewidth)
+    B.visualize(linewidths=linewidth)
 

@@ -6,6 +6,7 @@ from scipy.io import mmread
 from scipy.sparse import isspmatrix_coo, coo_matrix, load_npz
 from pygraphviz import AGraph
 import matplotlib.pyplot as plt
+from matplotlib.collections import LineCollection
 import cmasher as cmr
 
 class VGraph(AGraph):
@@ -200,16 +201,14 @@ class VGraph(AGraph):
         fig: user figure on which to plot
         ax : user axis on which to plot
         if fig, ax are supplied they are passed back to the user
-        if the caller does not supply a fig/ax, we create and show our own
-           figure
+        if caller does not supply a fig/ax, we create and show our own figure
         """
-        from time import perf_counter
         if (not self.__layout_lines):
             raise Exception('the graph has not been laid out yet; layout an existing PyGraphVis graph with .layout() or read in node positions and edges of a laid out graph file with .read_gv()')
         self.__get_nodes_edges(self.__layout_lines)
 
         # determine if user has passed their own plot object or if we should
-        # create our won
+        # create our own
         ez_plot = ((fig is None) or (ax is None))
 
         # get max edgelength
@@ -221,27 +220,27 @@ class VGraph(AGraph):
             if (d_cur > d_max):
                 d_max = d_cur
 
-        # render
+        # prepare to render (create figure, set up LineCollection)
         if (ez_plot):  # we can create and destroy our own plot
             fig, ax = plt.subplots(nrows=1,ncols=1)
         fig.patch.set_facecolor(self.bg_color)
         ax.patch.set_facecolor(self.bg_color)
-        t0 = perf_counter()
-        for (label_1, label_2) in self.__edges:
+        # dimensions of segments: number of lines x points per line x dimension
+        segments = empty((len(self.__edges),2,2),dtype='float64')
+        colors   = [self.cm(0)]*segments.shape[0]  # color of each segment
+        for i_l, (label_1, label_2) in enumerate(self.__edges):
             n_1 = self.__nodes[label_1]
             n_2 = self.__nodes[label_2]
-            x = [n_1[0], n_2[0]]
-            y = [n_1[1], n_2[1]]
-            ax.plot(x,y,
-                    **kwargs,
-                    color = self.cm(norm(n_1 - n_2)/d_max))
-        print(f'plotted all lines in {perf_counter() - t0}')
+            segments[i_l] = array([n_1,n_2])
+            colors[i_l] = self.cm(norm(n_1 - n_2)/d_max)
+
+        # render
+        line_segments = LineCollection(segments,*args,colors=colors,**kwargs)
+        ax.add_collection(line_segments)
         ax.axis('square')
         ax.axis('off')
         if (ez_plot):      # show plot for user
-            t0 = perf_counter()
             plt.show()
-            print(f'rendered in {perf_counter() - t0}')
         else:              # give user control over plot
             return fig, ax
 
