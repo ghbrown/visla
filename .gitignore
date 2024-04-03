@@ -5,3 +5,4 @@ __pycache__/
 build/
 dist/
 test_venv/
+big_matrices/

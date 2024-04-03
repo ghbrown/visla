@@ -17,9 +17,9 @@ parser.add_argument('--filetype',
                     help='force usage of filetype (if not detected automatically'
                     )
 parser.add_argument('--bipartite',
-                    action='store_true',
-                    default=False,
-                    help='visualize bipartite version of matrix (automatically applied to non-square matrices)'
+                    choices=['T','F'],
+                    default=None,
+                    help='T: force bipartite version of matrix, F: force non-bipartite version of matrix (even if non-square)'
                     )
 parser.add_argument('--algorithm',
                     choices=['neato','fdp','sfdp'],
@@ -40,10 +40,13 @@ parser.add_argument('--save',
 args = parser.parse_args()
 path = Path(args.file)
 file_type = args.filetype
-bipartite = args.bipartite
 algorithm = args.algorithm
 linewidth = args.linewidth
 save = args.save
+if (args.bipartite is not None): # cast 'T'/'F' to True/False
+    bipartite = (args.bipartite == 'T')
+else:                            # choose bipartiteness automatically
+    bipartite = args.bipartite
 
 B = VGraph()  # object to hold graph
 B.bipartite = bipartite  # set bipartite-ness (should be set before read)

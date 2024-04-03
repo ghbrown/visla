@@ -18,7 +18,7 @@ class VGraph(AGraph):
         self.__impl_files = ['csv', 'mtx', 'npz', 'dot', 'gv']
         self.bg_color = 'black'
         self.cm       = cmr.get_sub_cmap(cmr.tropical,0.0,1.0)
-        self.bipartite = False
+        self.bipartite = None
 
     def layout(self,prog='sfdp',args=''):
         """
@@ -117,9 +117,16 @@ class VGraph(AGraph):
         # sparse matrix corresponds to a graph with m + n nodes and that the
         # terminus of the (i,j) entry from the graph is actually (i,m+j)
         i_str = [str(i) for i in A.row]
-        if ((m != n) or self.bipartite):  # bipartite graph
+        # determine whether graph should be bipartite
+        _bipartite = None
+        if (self.bipartite is None):  # user trusts us to choose
+            _bipartite = (m != n)
+        else:
+            _bipartite = self.bipartite
+        # set up graph
+        if (_bipartite):  # bipartite graph
             j_str = [str(m+j) for j in A.col]
-        else:  # standard graph corresponding to A + A^T
+        else:             # graph corresponding to A + A^T
             j_str = [str(j) for j in A.col]
         edge_list = [[i,j] for i, j in zip(i_str,j_str)]
         self.add_edges_from(edge_list)  # put edges into graph
@@ -196,6 +203,7 @@ class VGraph(AGraph):
         if the caller does not supply a fig/ax, we create and show our own
            figure
         """
+        from time import perf_counter
         if (not self.__layout_lines):
             raise Exception('the graph has not been laid out yet; layout an existing PyGraphVis graph with .layout() or read in node positions and edges of a laid out graph file with .read_gv()')
         self.__get_nodes_edges(self.__layout_lines)
@@ -218,6 +226,7 @@ class VGraph(AGraph):
             fig, ax = plt.subplots(nrows=1,ncols=1)
         fig.patch.set_facecolor(self.bg_color)
         ax.patch.set_facecolor(self.bg_color)
+        t0 = perf_counter()
         for (label_1, label_2) in self.__edges:
             n_1 = self.__nodes[label_1]
             n_2 = self.__nodes[label_2]
@@ -226,10 +235,13 @@ class VGraph(AGraph):
             ax.plot(x,y,
                     **kwargs,
                     color = self.cm(norm(n_1 - n_2)/d_max))
+        print(f'plotted all lines in {perf_counter() - t0}')
         ax.axis('square')
         ax.axis('off')
         if (ez_plot):      # show plot for user
+            t0 = perf_counter()
             plt.show()
+            print(f'rendered in {perf_counter() - t0}')
         else:              # give user control over plot
             return fig, ax
 
