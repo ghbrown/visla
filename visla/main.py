@@ -1,6 +1,10 @@
-from pygraphviz import AGraph
-from numpy import array
+from pathlib import Path
+from numpy import array, empty
+from numpy import max as nmax
 from numpy.linalg import norm
+from scipy.io import mmread
+from scipy.sparse import isspmatrix_coo, coo_matrix, load_npz
+from pygraphviz import AGraph
 import matplotlib.pyplot as plt
 import cmasher as cmr
 
@@ -10,8 +14,11 @@ class VGraph(AGraph):
         self.__layout_lines = []  # output of layout() as lines of file
         self.__nodes = {}
         self.__edges = []
+        # files with __from_<extsion>
+        self.__impl_files = ['csv', 'mtx', 'npz', 'dot', 'gv']
         self.bg_color = 'black'
         self.cm       = cmr.get_sub_cmap(cmr.tropical,0.0,1.0)
+        self.bipartite = False
 
     def layout(self,prog='sfdp',args=''):
         """
@@ -21,37 +28,101 @@ class VGraph(AGraph):
         AGraph.layout(self,prog=prog,args=args)
         self.__layout_lines = self.__multiline_to_lines(self.string())
 
-    def from_mtx(self,file_name,bipartite=False):
+    def from_file(self,file_name,file_type=None):
         """
         set up a GraphViz graph from a .mtx file
         """
+        _file_type = None  # will be a legal file type
+        # ensure we can parse the (implicitly) requested file type
+        if (file_type is not None):
+            if (file_type not in self.__impl_files):
+                raise Exception(f'file type {file_type} is unsupported',
+                                'legal file types are {self.__impl_files}')
+            else:  # file type selection valid
+                _file_type = file_type
+        else: # we'll have to guess the file type from extension
+            ext = Path(file_name).name.split('.')[-1]
+            if (ext not in self.__impl_files):
+                raise Exception(f'file type {file_type} is unsupported',
+                                f'try using the file_type option to force parsing as a file_type file')
+            else:  # file type selection valid
+                _file_type = ext
+
         # set up reasonable defaults
         # self.node_attr["label"] = ""  # PyGraphviz doesn't like this
         self.node_attr["shape"] = "none"
         self.node_attr["width"] = 0
         self.node_attr["height"] = 0
         self.edge_attr["penwidth"] = 1
-        # put edges into graph
+        
+        # __from_<extension> functions expected to set graph up themselves
+        if   (_file_type == 'mtx'):
+            self.__from_mtx(file_name) 
+        elif (_file_type == 'csv'):
+            self.__from_csv(file_name)
+        elif (_file_type == 'npz'):
+            self.__from_npz(file_name)
+        elif (_file_type in ['dot','gv']):
+            self.__from_gv(file_name)
+
+    def __from_csv(self,file_name):
+        """
+        set up a graph from a CSV file with 3 rows
+        first row must contain dimensions
+        """
         with open(file_name) as f:
             lines = f.readlines()
-        i_last = 0 # last line containing break (%----)
-        for i_l, line in enumerate(lines):
-            if ('%---' in line):
-                i_last = i_l
-        i_dim = i_last + 1 # contains dimensions
-        m, n = lines[i_dim].strip().split()[0:2]  # row and column dimensions
-        i_0 = i_dim + 2    # first line containing data
-        for line in lines[i_0:]:
-            i, j = line.strip().split()[0:2]  # ingore nonzero (if present)
-            if ((m != n) or bipartite):  # set up corresponding bipartite graph
-                self.add_edge(i,str(int(m)+int(j)))
-            else:                        # graph corresponding to A + A^T
-                self.add_edge(i,j)
+        # get dimensions from first line
+        m, n = [int(a.strip()) for a in lines[0].strip().split(',')[0:2]]
+        # get connectivity data from following lines
+        row = empty(len(lines)-1,dtype=int)  # -1 since first line has dimensions
+        col = empty(row.shape[0],dtype=int)
+        for i_l, line in enumerate(lines[1:]):
+            row[i_l], col[i_l] = [int(a.strip()) for a in
+                                  line.strip().split(',')[0:2]]
+        data = empty(row.shape[0])  # dummy values, have no impact
+        A = coo_matrix((data,(row,col)),shape=(m,n))
+        self.__graph_from_coo(A)
 
-    def __multiline_to_lines(self,ml):
-        # https://stackoverflow.com/questions/7630273/convert-multiline-into-list
-        lines = [y for y in (x.strip() for x in ml.splitlines()) if y]
-        return lines
+    def __from_npz(self,file_name):
+        """
+        set up graph from an npz file containing a sparse matrix
+        """
+        A = load_npz(file_name)
+        if (not isspmatrix_coo(A)):
+            A = A.asformat('coo')
+        self.__graph_from_coo(A)
+
+    def __from_mtx(self,file_name):
+        """
+        set up graph from an mtx file
+        """
+        A = mmread(file_name)  # A is COO by default
+        self.__graph_from_coo(A)
+
+    def __from_gv(self,file_name):
+        """
+        set up graph from a dot/gv file
+        https://graphviz.org/docs/outputs/canon/
+        """
+        self.read(file_name)
+
+    def __graph_from_coo(self,A):
+        """
+        builds a GraphVis graph from a scipy.sparse.coo_matrix
+        """
+        m, n = A.shape  # row and column dimensions
+        # construct list containing edges of the graph to be visualized
+        # all edges "start at i", but in the bipartite case we suppose the
+        # sparse matrix corresponds to a graph with m + n nodes and that the
+        # terminus of the (i,j) entry from the graph is actually (i,m+j)
+        i_str = [str(i) for i in A.row]
+        if ((m != n) or self.bipartite):  # bipartite graph
+            j_str = [str(m+j) for j in A.col]
+        else:  # standard graph corresponding to A + A^T
+            j_str = [str(j) for j in A.col]
+        edge_list = [[i,j] for i, j in zip(i_str,j_str)]
+        self.add_edges_from(edge_list)  # put edges into graph
 
     def __get_nodes_edges(self,lines):
         """
@@ -161,3 +232,8 @@ class VGraph(AGraph):
             plt.show()
         else:              # give user control over plot
             return fig, ax
+
+    def __multiline_to_lines(self,ml):
+        # https://stackoverflow.com/questions/7630273/convert-multiline-into-list
+        lines = [y for y in (x.strip() for x in ml.splitlines()) if y]
+        return lines

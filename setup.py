@@ -31,6 +31,7 @@ setuptools.setup(
     ],
     install_requires=[
         'numpy',
+        'scipy',
         'pygraphviz',
         'matplotlib',
         'cmasher',
