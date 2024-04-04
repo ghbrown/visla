@@ -15,7 +15,7 @@ class VGraph(AGraph):
         self.__layout_lines = []  # output of layout() as lines of file
         self.__nodes = {}
         self.__edges = []
-        # files with __from_<extsion>
+        # files with __from_<extension>
         self.__impl_files = ['csv', 'mtx', 'npz', 'dot', 'gv']
         self.bg_color = 'black'
         self.cm       = cmr.get_sub_cmap(cmr.tropical,0.0,1.0)

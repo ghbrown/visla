@@ -65,7 +65,7 @@ The pipeline to create these visualization was informed by the following:
 ### Limitations
 
 - The parser to get connectivity and coordinates was hacked together and made to work on practical examples.
+  As such it's not terribly fast.
   (See `todo.md` for some possible improvements.)
-- Render performance is relatively poor compared to layout performance, on which we beat the reported CPU times (for example http://yifanhu.net/GALLERY/GRAPHS/GIF_SMALL/AG-Monien@grid1_dual.html) probably because we're using the same implementation on modern hardware).
-  (See `todo.md` for some possible improvements.)
+- Currently all connected components are visualized, but ideally one could (optionally) visualize only the largest component.
 
