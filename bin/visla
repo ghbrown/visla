@@ -40,7 +40,7 @@ parser.add_argument('--save',
                     )
 parser.add_argument('--time',
                     action='store_true',
-                    help='print timings'
+                    help='print timings of key tasks'
                     )
 args = parser.parse_args()
 path = Path(args.file)
@@ -56,7 +56,7 @@ else:                            # choose bipartiteness automatically
 
 B = VGraph()  # object to hold graph
 B.bipartite = bipartite  # set bipartite-ness (should be set before read)
-B.timings = True
+B.timings = timings
 B.from_file(path,file_type=file_type)  # read in graph
 B.layout(prog=algorithm)  # lay out graph nodes in 2D using sdfp algorithm
 

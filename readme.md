@@ -49,23 +49,26 @@ For now, see `bin/visla` to see how some of these options are used.
 
 ### Notes
 
-I suggest using some sort of "SuiteSparse-getter" like [`ssgetpy`](https://github.com/drdarshan/ssgetpy) (available via pip) to retrieve `.mtx` files before feeding them to `visla`.
+- I suggest using some sort of "SuiteSparse-getter" like [`ssgetpy`](https://github.com/drdarshan/ssgetpy) (available via pip) to retrieve `.mtx` files before feeding them to `visla`.
 
-A few `.mtx` files are included: `will57.mtx` is small and good for prototyping, `grid1_dual.mtx` and `M10PI_n.mtx` are used to generate the figures above.
+- A few `.mtx` files are included: `will57.mtx` is small and good for prototyping, `grid1_dual.mtx` and `M10PI_n.mtx` are used to generate the figures above.
+
+- Graphs with about 40000 nodes and 130000 edges can be visualized in under 2 minutes on a laptop.
 
 
 ### Sources
 
 The pipeline to create these visualization was informed by the following:
-
 - [Yifan Hu's Gallery of Large Graphs](http://yifanhu.net/GALLERY/GRAPHS/index.html)
 - [Tim Davis's synopsis of how Yifan Hu generated his figures](https://people.engr.tamu.edu/davis/matrices.html)
+
+Some interesting facts learned along the way:
+- edges are colored according to their lengths
+- these visualizations are only in two dimensions 
 
 
 ### Limitations
 
-- The parser to get connectivity and coordinates was hacked together and made to work on practical examples.
-  As such it's not terribly fast.
-  (See `todo.md` for some possible improvements.)
 - Currently all connected components are visualized, but ideally one could (optionally) visualize only the largest component.
-
+- The parser to get connectivity and coordinates was made to work on practical examples.
+  I don't know of any cases where it fails, but be wary.
