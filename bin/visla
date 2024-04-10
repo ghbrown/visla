@@ -38,12 +38,17 @@ parser.add_argument('--save',
                     action='store',
                     help='also save visualization to file (determined from extension)'
                     )
+parser.add_argument('--time',
+                    action='store_true',
+                    help='print timings'
+                    )
 args = parser.parse_args()
 path = Path(args.file)
 file_type = args.filetype
 algorithm = args.algorithm
 linewidth = args.linewidth
 save = args.save
+timings = args.time
 if (args.bipartite is not None): # cast 'T'/'F' to True/False
     bipartite = (args.bipartite == 'T')
 else:                            # choose bipartiteness automatically
@@ -51,6 +56,7 @@ else:                            # choose bipartiteness automatically
 
 B = VGraph()  # object to hold graph
 B.bipartite = bipartite  # set bipartite-ness (should be set before read)
+B.timings = True
 B.from_file(path,file_type=file_type)  # read in graph
 B.layout(prog=algorithm)  # lay out graph nodes in 2D using sdfp algorithm
 
