@@ -1,6 +1,6 @@
 from pathlib import Path
 from time import perf_counter as pc
-from numpy import array, empty
+from numpy import array, empty, where, arange, sort, interp
 from numpy import max as nmax
 from numpy.linalg import norm
 from scipy.io import mmread
@@ -98,13 +98,33 @@ class VGraph(AGraph):
         ez_plot = ((fig is None) or (ax is None))
 
         # get max edgelength
-        d_max = 0
-        for (label_1, label_2) in self.__edges:
+        n_edges = len(self.__edges)
+        d_vec = empty(n_edges)  # will contain all edge lengths
+        for i, (label_1, label_2) in enumerate(self.__edges):
             n_1 = self.__nodes[label_1]
             n_2 = self.__nodes[label_2]
             d_cur = norm(n_1-n_2)
-            if (d_cur > d_max):
-                d_max = d_cur
+            d_vec[i] = d_cur
+        # get indices of edges with zero length
+        idx_nz = where(d_vec > 0.0)[0]
+        
+        # sort distances and remove zeros
+        d_vec_snz = sort(d_vec[idx_nz])
+        d_max = d_vec_snz[-1]
+
+        # set up uniform density transformation for colormap
+        n_edges_nz = idx_nz.shape[0]  # number of edges of nonzero length
+        n_bins = 20  # fix some number of bins
+        stride = int(n_edges_nz/n_bins)
+        edge_indices = list(range(0,n_edges_nz,stride))
+        if (edge_indices[-1] != (n_edges_nz-1)):
+            edge_indices.append(n_edges_nz-1)
+        bin_edges_nz = d_vec_snz[edge_indices]
+        # input: relative distance values from (d(i,j)/d_max) (0 to 1)
+        # output: colormap values (0 to 1)
+        x = bin_edges_nz/d_max
+        y = arange(bin_edges_nz.shape[0],dtype=float)/(bin_edges_nz.shape[0] + 1)
+    
 
         # prepare to render (create figure, set up LineCollection)
         if (ez_plot):  # we can create and destroy our own plot
@@ -112,13 +132,17 @@ class VGraph(AGraph):
         fig.patch.set_facecolor(self.bg_color)
         ax.patch.set_facecolor(self.bg_color)
         # dimensions of segments: number of lines x points per line x dimension
-        segments = empty((len(self.__edges),2,2),dtype='float64')
+        segments = empty((n_edges_nz,2,2),dtype='float64')
         colors   = [self.cm(0)]*segments.shape[0]  # color of each segment
-        for i_l, (label_1, label_2) in enumerate(self.__edges):
+        # loop over edges of non-zero length
+        edges_nz = array(self.__edges)[idx_nz]
+        for i_l, (label_1, label_2) in enumerate(edges_nz):
             n_1 = self.__nodes[label_1]
             n_2 = self.__nodes[label_2]
+            d = norm(n_1 - n_2)
             segments[i_l] = array([n_1,n_2])
-            colors[i_l] = self.cm(norm(n_1 - n_2)/d_max)
+            # colors[i_l] = self.cm(norm(n_1 - n_2)/d_max)
+            colors[i_l] = self.cm(interp(d/d_max,x,y))
 
         # render
         line_segments = LineCollection(segments,*args,colors=colors,**kwargs)
