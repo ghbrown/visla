@@ -1,6 +1,6 @@
 from pathlib import Path
 from time import perf_counter as pc
-from numpy import array, empty, where, arange, sort, interp
+from numpy import array, empty, where, arange, sort, cumsum, interp
 from numpy import max as nmax
 from numpy.linalg import norm
 from scipy.io import mmread
@@ -20,6 +20,7 @@ class VGraph(AGraph):
         self.__impl_files = ['csv', 'mtx', 'npz', 'dot', 'gv']
         self.timings = False
         self.bg_color = 'black'
+        self.n_bins = 20  # used to autobalance colors visualization
         self.cm       = cmr.get_sub_cmap(cmr.tropical,0.0,1.0)
         self.bipartite = None
 
@@ -97,7 +98,7 @@ class VGraph(AGraph):
         # create our own
         ez_plot = ((fig is None) or (ax is None))
 
-        # get max edgelength
+        # compute all edgelengths
         n_edges = len(self.__edges)
         d_vec = empty(n_edges)  # will contain all edge lengths
         for i, (label_1, label_2) in enumerate(self.__edges):
@@ -105,26 +106,32 @@ class VGraph(AGraph):
             n_2 = self.__nodes[label_2]
             d_cur = norm(n_1-n_2)
             d_vec[i] = d_cur
-        # get indices of edges with zero length
-        idx_nz = where(d_vec > 0.0)[0]
-        
-        # sort distances and remove zeros
-        d_vec_snz = sort(d_vec[idx_nz])
+
+        # process edge length data (remove length 0 edges, get max length)
+        idx_nz = where(d_vec > 0.0)[0]  # indices of edges with length 0
+        n_edges_nz = idx_nz.shape[0]    # number of edges of nonzero length
+        d_vec_snz = sort(d_vec[idx_nz]) # sort distances and remove length 0 edges
         d_max = d_vec_snz[-1]
 
-        # set up uniform density transformation for colormap
-        n_edges_nz = idx_nz.shape[0]  # number of edges of nonzero length
-        n_bins = 20  # fix some number of bins
-        stride = int(n_edges_nz/n_bins)
-        edge_indices = list(range(0,n_edges_nz,stride))
-        if (edge_indices[-1] != (n_edges_nz-1)):
-            edge_indices.append(n_edges_nz-1)
-        bin_edges_nz = d_vec_snz[edge_indices]
-        # input: relative distance values from (d(i,j)/d_max) (0 to 1)
-        # output: colormap values (0 to 1)
-        x = bin_edges_nz/d_max
-        y = arange(bin_edges_nz.shape[0],dtype=float)/(bin_edges_nz.shape[0] + 1)
-    
+        # set up a function   u : edge length -> [0,1]
+        # such that the amount (measured in edge length) of each color rendered
+        # is approximately the same
+        n_bins = self.n_bins
+        d_vec_snzc = cumsum(d_vec_snz)
+        edge_indices = [1e100]*(n_bins+1)  # indices (into d_vec_snzc) of bin edges
+        length_per_bin = d_vec_snzc[-1]/n_bins  # length of edges per bin
+        edge_indices[-1] = -1  # right edge of last bin always end of array
+        i_e = 0  # edge index
+        i_b = 0  # bin index 
+        while (i_b < n_bins):  # search for indices of bin edges
+            if (d_vec_snzc[i_e] >= i_b*length_per_bin):
+                edge_indices[i_b] = i_e
+                i_b += 1
+            i_e += 1
+        bin_edges = d_vec_snz[edge_indices]  # distances corresponding to edges of bins
+        x = bin_edges
+        y = arange(bin_edges.shape[0],dtype=float)/(bin_edges.shape[0] + 1)
+        u = lambda d: interp(d,x,y)
 
         # prepare to render (create figure, set up LineCollection)
         if (ez_plot):  # we can create and destroy our own plot
@@ -141,8 +148,7 @@ class VGraph(AGraph):
             n_2 = self.__nodes[label_2]
             d = norm(n_1 - n_2)
             segments[i_l] = array([n_1,n_2])
-            # colors[i_l] = self.cm(norm(n_1 - n_2)/d_max)
-            colors[i_l] = self.cm(interp(d/d_max,x,y))
+            colors[i_l] = self.cm(u(d))  # using "uniform" transformation from above
 
         # render
         line_segments = LineCollection(segments,*args,colors=colors,**kwargs)
