@@ -1,4 +1,4 @@
-#!/usr/bin/env/python3
+#!/usr/bin/python3
 import argparse
 from pathlib import Path
 from visla import VGraph
@@ -14,7 +14,7 @@ parser.add_argument('file',
 parser.add_argument('--filetype',
                     choices=VGraph()._VGraph__impl_files,
                     metavar='extension',
-                    help='force usage of filetype (if not detected automatically'
+                    help='force usage of filetype (if not detected automatically)'
                     )
 parser.add_argument('--bipartite',
                     choices=['T','F'],
@@ -36,7 +36,7 @@ parser.add_argument('--linewidth',
 parser.add_argument('--save',
                     metavar='file',
                     action='store',
-                    help='also save visualization to file (determined from extension)'
+                    help='also save visualization to file (type determined from extension), with transparent background if possible'
                     )
 parser.add_argument('--time',
                     action='store_true',
