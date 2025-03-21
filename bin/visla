@@ -3,7 +3,7 @@ import argparse
 from pathlib import Path
 from visla import VGraph
 import matplotlib.pyplot as plt
-
+import cmasher as cmr
 
 # set up command line argument parser
 parser = argparse.ArgumentParser()
@@ -42,6 +42,11 @@ parser.add_argument('--time',
                     action='store_true',
                     help='print timings of key tasks'
                     )
+parser.add_argument('--colormap',
+                    choices=['tropical','neon','jet','turbo','hsv'],
+                    default='tropical',
+                    help='colormap used for edges'
+                    )
 args = parser.parse_args()
 path = Path(args.file)
 file_type = args.filetype
@@ -49,22 +54,33 @@ algorithm = args.algorithm
 linewidth = args.linewidth
 save = args.save
 timings = args.time
+colormap_string = args.colormap
+
 if (args.bipartite is not None): # cast 'T'/'F' to True/False
     bipartite = (args.bipartite == 'T')
 else:                            # choose bipartiteness automatically
     bipartite = args.bipartite
+string_to_colormap_dict = {
+    'tropical' : cmr.get_sub_cmap(cmr.tropical,0.0,1.0),
+    'neon'     : cmr.neon,
+    'jet'      : plt.get_cmap('jet'),
+    'turbo'    : plt.get_cmap('turbo'),
+    'hsv'      : plt.get_cmap('hsv'),
+    }
+colormap = string_to_colormap_dict[colormap_string]
 
 B = VGraph()  # object to hold graph
 B.bipartite = bipartite  # set bipartite-ness (should be set before read)
 B.timings = timings
 B.from_file(path,file_type=file_type)  # read in graph
 B.layout(prog=algorithm)  # lay out graph nodes in 2D using sdfp algorithm
+B.cm = colormap
 
 if (save is not None): # set up our own fig/ax to show and save figure
     fig, ax = plt.subplots(nrows=1,ncols=1)  # we own figure to control/save plot
     fig, ax = B.visualize(fig,ax,linewidths=linewidth)  # visualize graph
     plt.show()
-    fig.savefig(save,transparent=True)
+    fig.savefig(save,dpi=1200,transparent=True)
 else:  # let VGraph create and destroy its own figure internally
     B.visualize(linewidths=linewidth)
 

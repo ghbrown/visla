@@ -122,7 +122,7 @@ class VGraph(AGraph):
         length_per_bin = d_vec_snzc[-1]/n_bins  # length of edges per bin
         edge_indices[-1] = -1  # right edge of last bin always end of array
         i_e = 0  # edge index
-        i_b = 0  # bin index 
+        i_b = 0  # bin index
         while (i_b < n_bins):  # search for indices of bin edges
             if (d_vec_snzc[i_e] >= i_b*length_per_bin):
                 edge_indices[i_b] = i_e
