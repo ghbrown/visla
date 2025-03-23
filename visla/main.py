@@ -158,9 +158,11 @@ class VGraph(AGraph):
         row = empty(len(lines)-1,dtype=int)  # -1 since first line has dimensions
         col = empty(row.shape[0],dtype=int)
         for i_l, line in enumerate(lines[1:]):
-            row[i_l], col[i_l] = [int(a.strip()) for a in
-                                  line.strip().split(',')[0:2]]
+            row[i_l], col[i_l] = [int(a.strip()) for a in line.strip().split(',')[0:2]]
         data = empty(row.shape[0])  # dummy values, have no impact
+        if (min(min(row),min(col)) == 1):  # fix 1-based indexing
+            row = (row - 1).astype(int)
+            col = (col - 1).astype(int)
         A = coo_matrix((data,(row,col)),shape=(m,n))
         self.__graph_from_coo(A)
 
