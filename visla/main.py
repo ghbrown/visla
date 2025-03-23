@@ -21,7 +21,7 @@ class VGraph(AGraph):
         self.timings = False
         self.bg_color = 'black'
         self.n_bins = 20  # used to autobalance colors visualization
-        self.cm       = cmr.get_sub_cmap(cmr.tropical,0.0,1.0)
+        self.cm       = plt.get_cmap('gist_rainbow')
         self.bipartite = None
 
 
@@ -113,26 +113,6 @@ class VGraph(AGraph):
         d_vec_snz = sort(d_vec[idx_nz]) # sort distances and remove length 0 edges
         d_max = d_vec_snz[-1]
 
-        # set up a function   u : edge length -> [0,1]
-        # such that the amount (measured in edge length) of each color rendered
-        # is approximately the same
-        n_bins = self.n_bins
-        d_vec_snzc = cumsum(d_vec_snz)
-        edge_indices = [1e100]*(n_bins+1)  # indices (into d_vec_snzc) of bin edges
-        length_per_bin = d_vec_snzc[-1]/n_bins  # length of edges per bin
-        edge_indices[-1] = -1  # right edge of last bin always end of array
-        i_e = 0  # edge index
-        i_b = 0  # bin index
-        while (i_b < n_bins):  # search for indices of bin edges
-            if (d_vec_snzc[i_e] >= i_b*length_per_bin):
-                edge_indices[i_b] = i_e
-                i_b += 1
-            i_e += 1
-        bin_edges = d_vec_snz[edge_indices]  # distances corresponding to edges of bins
-        x = bin_edges
-        y = arange(bin_edges.shape[0],dtype=float)/(bin_edges.shape[0] + 1)
-        u = lambda d: interp(d,x,y)
-
         # prepare to render (create figure, set up LineCollection)
         if (ez_plot):  # we can create and destroy our own plot
             fig, ax = plt.subplots(nrows=1,ncols=1)
@@ -148,7 +128,7 @@ class VGraph(AGraph):
             n_2 = self.__nodes[label_2]
             d = norm(n_1 - n_2)
             segments[i_l] = array([n_1,n_2])
-            colors[i_l] = self.cm(u(d))  # using "uniform" transformation from above
+            colors[i_l] = self.cm(d/d_max)  # normalize by max edge length (seems to be what Yifan Hu does, judging by eye)
 
         # render
         line_segments = LineCollection(segments,*args,colors=colors,**kwargs)

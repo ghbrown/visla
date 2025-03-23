@@ -43,8 +43,8 @@ parser.add_argument('--time',
                     help='print timings of key tasks'
                     )
 parser.add_argument('--colormap',
-                    choices=['tropical','neon','jet','turbo','hsv'],
-                    default='tropical',
+                    choices=['gist_rainbow','jet','turbo','hsv','tropical','neon'],
+                    default='gist_rainbow',
                     help='colormap used for edges'
                     )
 args = parser.parse_args()
@@ -61,11 +61,12 @@ if (args.bipartite is not None): # cast 'T'/'F' to True/False
 else:                            # choose bipartiteness automatically
     bipartite = args.bipartite
 string_to_colormap_dict = {
-    'tropical' : cmr.get_sub_cmap(cmr.tropical,0.0,1.0),
-    'neon'     : cmr.neon,
-    'jet'      : plt.get_cmap('jet'),
-    'turbo'    : plt.get_cmap('turbo'),
-    'hsv'      : plt.get_cmap('hsv'),
+    'gist_rainbow' : plt.get_cmap('gist_rainbow'),
+    'jet'          : plt.get_cmap('jet'),
+    'turbo'        : plt.get_cmap('turbo'),
+    'hsv'          : plt.get_cmap('hsv'),
+    'tropical'     : cmr.get_sub_cmap(cmr.tropical,0.0,1.0),
+    'neon'         : cmr.neon,
     }
 colormap = string_to_colormap_dict[colormap_string]
 
