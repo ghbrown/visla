@@ -64,7 +64,7 @@ class VGraph(AGraph):
         self.node_attr["width"] = 0
         self.node_attr["height"] = 0
         self.edge_attr["penwidth"] = 1
-        
+
         # __from_<extension> functions expected to set graph up themselves
         if   (_file_type == 'mtx'):
             self.__from_mtx(file_name) 
@@ -113,6 +113,13 @@ class VGraph(AGraph):
         d_vec_snz = sort(d_vec[idx_nz]) # sort distances and remove length 0 edges
         d_max = d_vec_snz[-1]
 
+        # compute extremal nodes for bounding box of plot
+        nodes_arr = array(list(self.__nodes.values()))
+        x_coords, y_coords = nodes_arr[:,0], nodes_arr[:,1]
+        x_lims = [x_coords.max(), x_coords.min()]
+        y_lims = [y_coords.max(), y_coords.min()]
+        del nodes_arr, x_coords, y_coords
+
         # prepare to render (create figure, set up LineCollection)
         if (ez_plot):  # we can create and destroy our own plot
             fig, ax = plt.subplots(nrows=1,ncols=1)
@@ -135,6 +142,8 @@ class VGraph(AGraph):
         ax.add_collection(line_segments)
         ax.axis('square')
         ax.axis('off')
+        ax.set_xlim(*x_lims)
+        ax.set_ylim(*y_lims)
         # finish timing
         t_1 = pc()
         if self.timings:
@@ -260,7 +269,7 @@ class VGraph(AGraph):
         t_1 = pc()
         if self.timings:
             print(f'time to read nodes, edges, and positions: {t_1 - t_0}')
-        
+
 
     def __multiline_to_lines(self,ml):
         # https://stackoverflow.com/questions/7630273/convert-multiline-into-list

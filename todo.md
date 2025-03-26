@@ -1,9 +1,7 @@
 
 # To do:
-- CSV functionality actually doesn't work
-  - would be nice if it didn't need the dimensions at the top (could optionally detect them
+- would be nice if CSV didn't need the dimensions at the top (could optionally detect them
     by presence of only one comma)
-  - should handle 1 vs 0 indexing
 - confirm the selected license is compatible with Graphviz's
 - (optionally) visualize only the largest connected component
   - will need to identify said component first (at some additional cost)
