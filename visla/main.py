@@ -21,7 +21,7 @@ class VGraph(AGraph):
         self.timings = False
         self.bg_color = 'black'
         self.n_bins = 20  # used to autobalance colors visualization
-        self.cm       = plt.get_cmap('gist_rainbow')
+        self.colormap = plt.get_cmap('gist_rainbow')
         self.bipartite = None
 
 
@@ -67,7 +67,7 @@ class VGraph(AGraph):
 
         # __from_<extension> functions expected to set graph up themselves
         if   (_file_type == 'mtx'):
-            self.__from_mtx(file_name) 
+            self.__from_mtx(file_name)
         elif (_file_type == 'csv'):
             self.__from_csv(file_name)
         elif (_file_type == 'npz'):
@@ -127,7 +127,7 @@ class VGraph(AGraph):
         ax.patch.set_facecolor(self.bg_color)
         # dimensions of segments: number of lines x points per line x dimension
         segments = empty((n_edges_nz,2,2),dtype='float64')
-        colors   = [self.cm(0)]*segments.shape[0]  # color of each segment
+        colors   = [self.colormap(0)]*segments.shape[0]  # color of each segment
         # loop over edges of non-zero length
         edges_nz = array(self.__edges)[idx_nz]
         for i_l, (label_1, label_2) in enumerate(edges_nz):
@@ -135,7 +135,7 @@ class VGraph(AGraph):
             n_2 = self.__nodes[label_2]
             d = norm(n_1 - n_2)
             segments[i_l] = array([n_1,n_2])
-            colors[i_l] = self.cm(d/d_max)  # normalize by max edge length (seems to be what Yifan Hu does, judging by eye)
+            colors[i_l] = self.colormap(d/d_max)  # normalize by max edge length (seems to be what Yifan Hu does, judging by eye)
 
         # render
         line_segments = LineCollection(segments,*args,colors=colors,**kwargs)
